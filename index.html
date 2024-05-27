@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumber Futures Line Graph</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+</head>
+<body>
+<h1>Lumber Futures Line Graph</h1>
+<div id="chart"></div>
+<div class="source">
+    Source: <a href="#">Your Data Source</a>
+</div>
+
+<script>
+    const margin = {top: 20, right: 30, bottom: 30, left: 40},
+        width = 800 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+
+    const svg = d3.select("#chart")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const parseDate = d3.timeParse("%Y-%m-%d");
+
+    d3.csv("cleaned_lumber_data.csv").then(data => {
+        data = data.filter(d => d.Date && d['Close*']);
+
+        data.forEach(d => {
+            d.Date = parseDate(d.Date);
+            d.Close = +d['Close*'];
+        });
+
+        const x = d3.scaleTime().range([0, width]);
+        const y = d3.scaleLinear().range([height, 0]);
+
+        const valueline = d3.line()
+            .x(d => x(d.Date))
+            .y(d => y(d.Close));
+
+        x.domain(d3.extent(data, d => d.Date));
+        y.domain([0, d3.max(data, d => d.Close)]);
+
+        svg.append("path")
+            .data([data])
+            .attr("class", "chart-line")
+            .attr("d", valueline);
+
+        svg.append("g")
+            .attr("class", "x-axis")
+            .attr("transform", `translate(0,${height})`)
+            .call(d3.axisBottom(x));
+
+        svg.append("g")
+            .attr("class", "y-axis")
+            .call(d3.axisLeft(y));
+    });
+</script>
+</body>
+</html>
